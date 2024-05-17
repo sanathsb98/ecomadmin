@@ -1,0 +1,30 @@
+.add-product-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.add-savecancel-btns{
+    display: flex;
+    gap: 16px;
+}
+.add-product-titles,.add-savecancel-btns{
+    font-size: 18px;
+}
+.add-product-titles{
+    color: rgb(255, 255, 255);
+    font-weight: 600;
+    font-size:22px ;
+}
+.add-product-cancel{
+    color: #1E5EFF;
+    border: 1px solid gray;
+    padding: 10px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+.add-product-save{
+    background-color: #1E5EFF;
+    padding: 10px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+}
