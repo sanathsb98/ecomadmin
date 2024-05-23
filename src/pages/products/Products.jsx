@@ -1,5 +1,6 @@
 import React, { useState,useRef,useEffect } from 'react';
 import '../products/Products.css';
+import axios from 'axios';
 
 const Products = () => {
 
@@ -7,6 +8,15 @@ const Products = () => {
   const [file, setFile] = useState(null)
   const fileInputRef = useRef(null);
   const [imageSrc, setImageSrc] = useState(null);
+  const [productData, setProductData] = useState({
+        productName :"",
+        productDescription :"",
+        productCategory :"",
+        productPrice :null,
+        newLaunch:false,
+        productImage :"",
+        productRating :null
+  })
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -38,10 +48,39 @@ const Products = () => {
     if (file) {
       const objectUrl = URL.createObjectURL(file);
       setImageSrc(objectUrl);
+      setProductData((prevData)=>({...prevData,productImage:objectUrl}))
 
       return () => URL.revokeObjectURL(objectUrl); // Cleanup the object URL when the component unmounts or the file changes
     }
   }, [file]);
+
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setProductData((prevData) => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const submitProduct = () => {
+    const formData = new FormData();
+    formData.append("productName",productData.productName);
+    formData.append("productDescription",productData.productDescription);
+    formData.append("productCategory",productData.productCategory);
+    formData.append("productPrice",productData.productPrice);
+    formData.append("newLaunch",productData.newLaunch);
+    formData.append("productImage",productData.productImage);
+    formData.append("productRating",productData.productRating);
+    if(file){
+      formData.append("productImage",productData.productImage);
+    }
+    try{
+     axios.post("https://shopappbackend.vercel.app/api/addProduct",formData)
+    }
+    catch(err){
+      console.log(err)
+    }
+  }
 
   return (
     <div className='page-container'>
@@ -51,7 +90,7 @@ const Products = () => {
           <div className='add-product-titles'>Add Product</div>
           <div className='add-savecancel-btns'>
             <div className='add-product-cancel'>Cancel</div>
-            <div className='add-product-save'>Save</div>
+            <div onClick={()=>{submitProduct()}} className='add-product-save'>Save</div>
           </div>
         </div>
 
@@ -62,25 +101,27 @@ const Products = () => {
             <div className='add-product-name-sec'>
               <div className='add-product-name'>Product Name</div>
               <div className='add-product-input'>
-                <input placeholder='product name' className='add-product-input' type='text' />
+                <input name='productName' value={productData.productName} onChange={handleChange} placeholder='product name' className='add-product-input' type='text' />
               </div>
             </div>
             <div className='add-product-des-sec'>
               <div className='add-product-name'>Product Description</div>
               <div className='add-product-input'>
-                <textarea id="myTextArea" rows="6" cols="50" placeholder='add-product-input' className='add-product-input' type='text-description' />
+                <textarea name='productDescription' value={productData.productDescription} onChange={handleChange} id="myTextArea" rows="6" cols="50" placeholder='add-product-input' className='add-product-input' type='text-description' />
               </div>
             </div>
             <div className='add-product-des-sec'>
               <div className='add-product-name'>Product Price</div>
               <div className='add-product-input'>
-                <input placeholder='product price' className='add-product-input' type='number' />
+                <input name='productPrice' value={productData.productPrice} onChange={handleChange}  placeholder='product price' className='add-product-input' type='number' />
               </div>
             </div>
             <div className='add-product-des-sec'>
               <div className='add-product-name'>New Launch</div>
               <div className='add-product-input'>
-                <select id='options' name='options' className='add-product-input'>
+                <select 
+                name='newLaunch' value={productData.newLaunch} onChange={handleChange}
+                id='options' className='add-product-input'>
                   <option value="true">Yes</option>
                   <option value="false">No</option>
                 </select>
