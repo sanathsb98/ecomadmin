@@ -6,17 +6,24 @@ const Products = () => {
 
   const [dragging, setDragging] = useState(false)
   const [file, setFile] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [productData, setProductData] = useState({
         productName :"",
         productDescription :"",
-        productCategory :"",
+        productCategory :"ecom",
         productPrice :null,
         newLaunch:false,
         productImage :"",
-        productRating :null
+        productRating :5
   })
+  const [isMounted, setIsMounted] = useState(true);
+  useEffect(() => {
+    return () => {
+      setIsMounted(false); // Component will unmount, set isMounted to false
+    };
+  }, []);
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -62,25 +69,44 @@ const Products = () => {
     }));
   };
 
-  const submitProduct = () => {
-    const formData = new FormData();
-    formData.append("productName",productData.productName);
-    formData.append("productDescription",productData.productDescription);
-    formData.append("productCategory",productData.productCategory);
-    formData.append("productPrice",productData.productPrice);
-    formData.append("newLaunch",productData.newLaunch);
-    formData.append("productImage",productData.productImage);
-    formData.append("productRating",productData.productRating);
-    if(file){
-      formData.append("productImage",productData.productImage);
+  const submitProduct = async () => {
+    setIsSubmitting(true);
+  
+    try {
+      const response = await fetch('https://shopappbackend.vercel.app/api/addProduct', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(productData)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to submit product');
+      }
+  
+      console.log('Product submitted successfully');
+      setProductData({
+        productName: '',
+        productDescription: '',
+        productCategory: 'ecom',
+        productPrice: null,
+        newLaunch: false,
+        productImage: '',
+        productRating: 5
+      });
+      setFile(null);
+      setImageSrc(null);
+    } catch (error) {
+      console.error('Error submitting product:', error);
+    } finally {
+      setIsSubmitting(false);
     }
-    try{
-     axios.post("https://shopappbackend.vercel.app/api/addProduct",formData)
-    }
-    catch(err){
-      console.log(err)
-    }
-  }
+  };
+  
+  
+  
+  
 
   return (
     <div className='page-container'>
@@ -90,7 +116,9 @@ const Products = () => {
           <div className='add-product-titles'>Add Product</div>
           <div className='add-savecancel-btns'>
             <div className='add-product-cancel'>Cancel</div>
-            <div onClick={()=>{submitProduct()}} className='add-product-save'>Save</div>
+            <div onClick={() => !isSubmitting && submitProduct()} className={`add-product-save ${isSubmitting ? 'disabled' : ''}`}>
+  {isSubmitting ? 'Submitting...' : 'Save'}
+</div>
           </div>
         </div>
 
