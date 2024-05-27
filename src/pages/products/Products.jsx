@@ -42,24 +42,26 @@ const Products = () => {
     }
   }
   const handleFileInput = (event) => {
-    const uploadedFile = event.target.files[0]
+    const uploadedFile = event.target.files[0];
     if (uploadedFile) {
-      setFile(uploadedFile);
+      const reader = new FileReader();
+      reader.readAsDataURL(uploadedFile);
+      reader.onloadend = () => {
+        setImageSrc(reader.result);
+        setProductData(prevData => ({
+          ...prevData,
+          productImage: reader.result // Assuming productImage field should hold the image data
+        }));
+      };
     }
-  }
+    console.log(imageSrc)
+  };
+  
   const handleButtonClick = () => {
     fileInputRef.current.click()
   }
 
-  useEffect(() => {
-    if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setImageSrc(objectUrl);
-      setProductData((prevData)=>({...prevData,productImage:objectUrl}))
 
-      return () => URL.revokeObjectURL(objectUrl); // Cleanup the object URL when the component unmounts or the file changes
-    }
-  }, [file]);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
