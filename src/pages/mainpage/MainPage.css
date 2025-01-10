@@ -1,0 +1,14 @@
+.main-page-container{
+    display: flex;
+   
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(0, 0, 0);
+    width: 100%;
+  
+}
+.main-page-contents{
+    width: 100%;
+    max-width: 1500px;
+    background-color: rgb(0, 0, 0);
+}
