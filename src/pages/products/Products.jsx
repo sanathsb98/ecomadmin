@@ -8,12 +8,15 @@ const Products = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
   const [imageSrc, setImageSrc] = useState(null);
+  const [rawImgData,setRawImgData] = useState();
   const [productData, setProductData] = useState({
     product_name: "",
     product_des : "",
     product_price : null,
+    stock_quantity : 10,
     product_image: "",
   });
+
   const [isMounted, setIsMounted] = useState(true);
 
   useEffect(() => {
@@ -43,10 +46,17 @@ const Products = () => {
 
   const handleFileInput = (event) => {
     const uploadedFile = event.target.files[0];
+    setRawImgData(uploadedFile)
     if (uploadedFile) {
-      handleFileUpload(uploadedFile);
+      const fileURL = URL.createObjectURL(uploadedFile);
+      setImageSrc(fileURL);
+      setProductData((prev) => ({
+        ...prev,
+        product_image: fileURL // Ensure the key matches the state definition
+      }));
     }
   };
+  
 
   const handleFileUpload = async (uploadedFile) => {
     const formData = new FormData();
@@ -76,48 +86,80 @@ const Products = () => {
   };
 
   const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+    const { name, value, } = event.target;
     setProductData((prevData) => ({
       ...prevData,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
+    console.log(productData)
   };
 
   const submitProduct = async () => {
+    if (!rawImgData) {
+      console.error("No image selected");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('file', rawImgData);
+    formData.append('upload_preset', 'default'); // Replace with your upload preset
+    formData.append('folder', 'your_folder_name'); // Optional
+  
     setIsSubmitting(true);
-
+  
     try {
-      const response = await fetch('https://pg-shop-app-backend.vercel.app/api/addProduct', {
+      // Upload image to Cloudinary
+      const response = await axios.post(
+        'https://api.cloudinary.com/v1_1/dqrvlus3b/image/upload', 
+        formData
+      );
+  
+      if (!response.data.secure_url) {
+        throw new Error("Failed to get image URL from Cloudinary");
+      }
+  
+      const imageUrl = response.data.secure_url;
+      console.log('Uploaded image URL:', imageUrl);
+  
+      // Create new product data with updated image URL
+      const updatedProductData = {
+        ...productData,
+        product_image: imageUrl
+      };
+  
+      // Send product data to backend
+      const productResponse = await fetch('https://pg-shop-app-backend.vercel.app/products/addProduct', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(productData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProductData)
       });
-
-      if (!response.ok) {
+  
+      if (!productResponse.ok) {
         throw new Error('Failed to submit product');
       }
-
+  
       console.log('Product submitted successfully');
+  
+      // Reset form state
       setProductData({
-        productName: '',
-        productDescription: '',
+        product_name: '',
+        product_des: '',
         productCategory: 'ecom',
-        productPrice: null,
+        product_price: null,
         newLaunch: false,
-        productImage: '',
+        product_image: '',
         productRating: 5
       });
       setFile(null);
       setImageSrc(null);
+  
     } catch (error) {
-      console.error('Error submitting product:', error);
+      console.error("Error:", error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
     <div className='page-container'>
       <div className='page-content'>
@@ -136,19 +178,19 @@ const Products = () => {
             <div className='add-product-name-sec'>
               <div className='add-product-name'>Product Name</div>
               <div className='add-product-input'>
-                <input name='productName' value={productData.product_name} onChange={handleChange} placeholder='product name' className='add-product-input' type='text' />
+                <input name='product_name' value={productData.product_name} onChange={handleChange} placeholder='product name' className='add-product-input' type='text' />
               </div>
             </div>
             <div className='add-product-des-sec'>
               <div className='add-product-name'>Product Description</div>
               <div className='add-product-input'>
-                <textarea name='productDescription' value={productData.product_des} onChange={handleChange} id="myTextArea" rows="6" cols="50" placeholder='add-product-input' className='add-product-input' />
+                <textarea name='product_des' value={productData.product_des} onChange={handleChange} id="myTextArea" rows="6" cols="50" placeholder='add-product-input' className='add-product-input' />
               </div>
             </div>
             <div className='add-product-des-sec'>
               <div className='add-product-name'>Product Price</div>
               <div className='add-product-input'>
-                <input name='productPrice' value={productData.product_price} onChange={handleChange} placeholder='product price' className='add-product-input' type='number' />
+                <input name='product_price' value={productData.product_price} onChange={handleChange} placeholder='product price' className='add-product-input' type='number' />
               </div>
             </div>
             <div className='add-product-des-sec'>
